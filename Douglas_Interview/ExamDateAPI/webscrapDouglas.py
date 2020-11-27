@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 class Course:
     def __init__(self, courseID):
         self.course = courseID
+        self.field = courseID[:4]
         self.sections = []
 
     def addSection(self, section):
@@ -18,6 +19,7 @@ class Course:
     def toJson(self):
 
         result = {
+            'Area' : self.field,
             'Course' : self.course,
             'Sections' : []
         }
@@ -45,6 +47,7 @@ class Section:
             'Room' : self.room,
         }
 
+areas = {}
 courses = {}
 
 def initialize():
@@ -70,8 +73,12 @@ def initialize():
                 except ValueError:
                     number_sections = int(data_columns[0]["rowspan"])
                     currentCourse = Course(data_columns[0].text)
+                    
                     courses[data_columns[0].text] = currentCourse
-                    #courses[currentCourse] = 0
+                    if currentCourse.field not in areas:
+                        areas[currentCourse.field] = []
+                    areas[currentCourse.field].append(currentCourse);
+                    
                     section_index = 1
             
             sectionNumber = data_columns[section_index].text
@@ -116,5 +123,10 @@ def getCourse(id):
         id = id.upper()
         if id in courses:
             return courses[id].toJson()
+        elif id in areas:
+            result = { 'Courses': [] }
+            for course in areas[id]:
+                result['Courses'].append(course.toJson())
+            return result
     
     return {'Error': 'Not found'}
